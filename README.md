@@ -9,7 +9,8 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 1 of 7. Weather models, weather codes and units.
+Day 2 of 7. Weather models, weather codes, units, and live forecasts from
+Open-Meteo.
 
 ## Getting started
 
@@ -44,6 +45,44 @@ never show half updated numbers. Values are checked when they're made, so a
 latitude of 200 or a day where the low is above the high is refused straight
 away.
 
+## Getting forecasts
+
+```python
+from weather import OpenMeteoProvider
+
+provider = OpenMeteoProvider()
+bromley = provider.find_place("Bromley")       # best match
+provider.find_places("Bromley")               # every match: UK, Australia...
+forecast = provider.forecast(bromley, days=7)
+forecast.current.temperature                  # 12.3
+```
+
+How it talks to the internet:
+
+- **Two APIs.** The geocoding API turns a name into a latitude and longitude.
+  The forecast API turns those into weather. Neither needs a key.
+- **Retries with growing waits.** If the server is busy (429 or 5xx) or the
+  connection drops, it waits 0.5 seconds, then 1, then gives up. Like
+  redialling a busy line, but not straight away, so a struggling server
+  isn't flooded.
+- **Mistakes aren't retried.** A 400 means our request was wrong, so asking
+  again won't help. The service's own reason is shown in the error.
+- **Clear errors.** `NetworkError` means it couldn't connect. `ApiError`
+  means it connected but got an error or something it couldn't read.
+  Damaged answers become an `ApiError`, never a confusing `KeyError`.
+- **Gaps are handled.** Open-Meteo sends `null` for unknown values. Rain
+  totals and chances become zero, and a missing sunrise just means daylight
+  hours aren't shown.
+
+The forecast's daily part comes as one list per field, like columns in a
+spreadsheet. `parse_forecast` uses `zip()` to read across them a day at a
+time.
+
+`WeatherProvider` is an abstract class with two methods. `OpenMeteoProvider`
+is one version of it, and another weather service could be added as a new
+class without changing anything else. `HttpClient` is abstract too, so the
+tests hand in a fake one with saved answers and never need the internet.
+
 ## Weather codes
 
 Weather services describe the sky with a number from the World
@@ -71,7 +110,7 @@ dashboard just asks whichever one it's given, and never checks which.
 ## Tests
 
 ```bash
-pytest          # 60 tests
+pytest          # 99 tests
 ```
 
 ## Week plan
