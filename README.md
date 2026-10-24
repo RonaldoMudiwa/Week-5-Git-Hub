@@ -9,8 +9,8 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 2 of 7. Weather models, weather codes, units, and live forecasts from
-Open-Meteo.
+Day 3 of 7. Weather models, weather codes, units, live forecasts from
+Open-Meteo, caching and favourite places.
 
 ## Getting started
 
@@ -83,6 +83,42 @@ is one version of it, and another weather service could be added as a new
 class without changing anything else. `HttpClient` is abstract too, so the
 tests hand in a fake one with saved answers and never need the internet.
 
+## Caching
+
+```python
+from weather import CachedProvider, FileCache, OpenMeteoProvider
+
+provider = CachedProvider(OpenMeteoProvider(), FileCache("data/cache.json"))
+provider.forecast(bromley)    # goes online
+provider.forecast(bromley)    # straight from the cache, no internet needed
+```
+
+Weather doesn't change much in a few minutes, and towns don't move, so
+there's no need to ask the internet every time. A cache is like writing the
+answer on a sticky note with a "use until" time.
+
+- Forecasts are kept for **15 minutes**, place searches for **30 days**.
+- If the internet is down, an older saved forecast is shown instead of an
+  error. Its `fetched_at` time says how old it is.
+- A damaged cache file counts as empty, so the worst case is fetching again.
+- Files are written to a temporary file first and then swapped in, so a
+  crash never leaves half a file.
+
+`CachedProvider` is the **Decorator pattern**. It wraps any other provider,
+like a phone case wraps a phone. It has the same methods, so the rest of the
+program can't tell the difference, and it adds caching on top.
+
+## Favourite places
+
+```python
+from weather import Favourites
+
+favourites = Favourites("data/places.json")
+favourites.add(bromley)
+favourites.set_home("Paris")     # the first place is used when none is named
+favourites.remove("bromley")     # case doesn't matter
+```
+
 ## Weather codes
 
 Weather services describe the sky with a number from the World
@@ -110,7 +146,7 @@ dashboard just asks whichever one it's given, and never checks which.
 ## Tests
 
 ```bash
-pytest          # 99 tests
+pytest          # 147 tests
 ```
 
 ## Week plan

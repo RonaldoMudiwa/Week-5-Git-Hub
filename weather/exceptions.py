@@ -28,3 +28,7 @@ class ApiError(WeatherError):
 
 class PlaceNotFoundError(WeatherError):
     """No place matches that name."""
+
+
+class StorageError(WeatherError):
+    """A saved file couldn't be read or written."""
