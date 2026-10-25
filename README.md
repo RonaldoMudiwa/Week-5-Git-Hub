@@ -9,8 +9,8 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 3 of 7. Weather models, weather codes, units, live forecasts from
-Open-Meteo, caching and favourite places.
+Day 4 of 7. Weather models, weather codes, units, live forecasts from
+Open-Meteo, caching, favourite places, the text dashboard and weather alerts.
 
 ## Getting started
 
@@ -44,6 +44,76 @@ Every class is frozen, like a printed weather report, so the dashboard can
 never show half updated numbers. Values are checked when they're made, so a
 latitude of 200 or a day where the low is above the high is refused straight
 away.
+
+## The dashboard
+
+```
+========================================================================
+                    Bromley, England, United Kingdom
+                           Updated 20 min ago
+========================================================================
+
+-- Right now -----------------------------------------------------------
+  12°C    Overcast
+  Feels like 10°C   Humidity 80%   Wind 14 km/h from the SW
+
+-- Next days -----------------------------------------------------------
+  Day       Sky                       High   Low          Rain      Wind
+  Today     Overcast                  14°C   7°C    20% 0.0 mm   18 km/h
+  Tomorrow  Rain                      13°C   9°C   90% 12.4 mm   55 km/h
+  Sat 24    Mainly clear              16°C  -1°C     0% 0.0 mm   18 km/h
+  Sun 25    Thunderstorm              18°C   9°C    70% 3.0 mm   30 km/h
+
+-- Temperature ---------------------------------------------------------
+  Today        7°C ..................###############......... 14°C
+  Tomorrow     9°C ......................#########........... 13°C
+  Sat 24      -1°C #####################################..... 16°C
+  Sun 25       9°C ......................#################### 18°C
+
+-- Alerts --------------------------------------------------------------
+  [Warning] Tomorrow: Heavy rain. Puddles and spray on the roads. Flooding is possible.
+  [Warning] Tomorrow: Strong wind. Tie down loose things outside. Travel may be slow.
+  [Warning] Sat 24: Frost. Icy surfaces likely. Cover plants and check the car.
+  [Warning] Sun 25: Thunderstorm. Lightning is possible. Avoid open ground.
+
+-- This week -----------------------------------------------------------
+  Warmest: Sun 25 at 18°C
+  Wettest: Tomorrow with 12.4 mm
+  Total rain: 15.4 mm
+  Dry days: Today, Sat 24
+```
+
+```python
+from weather import AlertChecker, OpenMeteoProvider, TextDashboard
+
+provider = OpenMeteoProvider()
+forecast = provider.forecast(provider.find_place("Bromley"))
+print(TextDashboard().render(forecast, AlertChecker().check(forecast)))
+```
+
+- The temperature chart draws each day's low to high on one shared scale,
+  so warm and cold days stand out at a glance. It only uses ordinary
+  characters, so it prints in any terminal.
+- If the forecast is over an hour old (an offline saved copy), the header
+  says so.
+- `DashboardRenderer` is abstract. `TextDashboard` is one way to draw it,
+  and an HTML version can be added without touching the forecast or alerts.
+
+## Weather alerts
+
+| Rule | Warning | Danger |
+| --- | --- | --- |
+| `FrostRule` | Low of 0°C or below | -5°C or below |
+| `HeatRule` | High of 28°C or more | 32°C or more |
+| `WindRule` | Gusts of 50 km/h or more | 75 km/h or more |
+| `HeavyRainRule` | 10 mm or more | 25 mm or more |
+| `ConditionRule` | Thunderstorms, snow | |
+| `UmbrellaRule` | Info only: 60% chance of rain today | |
+
+Each rule is its own small class with one job. `AlertChecker` runs them all
+and sorts what they find: soonest day first, most serious first. A new
+alert is a new class added to the list. Every limit can be changed, for
+example `FrostRule(below=3)` for a gardener.
 
 ## Getting forecasts
 
@@ -146,7 +216,7 @@ dashboard just asks whichever one it's given, and never checks which.
 ## Tests
 
 ```bash
-pytest          # 147 tests
+pytest          # 194 tests
 ```
 
 ## Week plan
