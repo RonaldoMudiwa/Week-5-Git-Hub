@@ -9,8 +9,9 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 4 of 7. Weather models, weather codes, units, live forecasts from
-Open-Meteo, caching, favourite places, the text dashboard and weather alerts.
+Day 5 of 7. Weather models, weather codes, units, live forecasts from
+Open-Meteo, caching, favourite places, the text dashboard, weather alerts
+and an HTML dashboard with a temperature chart.
 
 ## Getting started
 
@@ -97,7 +98,29 @@ print(TextDashboard().render(forecast, AlertChecker().check(forecast)))
 - If the forecast is over an hour old (an offline saved copy), the header
   says so.
 - `DashboardRenderer` is abstract. `TextDashboard` is one way to draw it,
-  and an HTML version can be added without touching the forecast or alerts.
+  and `HtmlDashboard` below is another, added without touching the forecast or alerts.
+
+## The HTML dashboard
+
+```python
+from weather import HtmlDashboard
+
+HtmlDashboard().save("data/bromley.html", forecast, AlertChecker().check(forecast))
+```
+
+The same forecast as a web page you can open in any browser. The highs and
+lows are drawn as two lines, with the chance of rain as bars behind them.
+
+- **One file, nothing to download.** The styles and the chart are inside
+  the page, so it opens offline and can be emailed as it is.
+- **The chart is SVG.** SVG is a picture made of instructions like "draw a
+  line from here to there", so the browser draws it and no chart library
+  is needed.
+- **Text is escaped.** A place name with `<` or `&` in it is shown as text
+  and can never break the page or sneak code into it.
+- `HtmlDashboard` is another `DashboardRenderer`, just like `TextDashboard`.
+  The forecast and the alerts didn't change at all to make it. The chart is
+  its own class, `TemperatureChart`, so it can be changed on its own.
 
 ## Weather alerts
 
@@ -216,7 +239,7 @@ dashboard just asks whichever one it's given, and never checks which.
 ## Tests
 
 ```bash
-pytest          # 194 tests
+pytest          # 215 tests
 ```
 
 ## Week plan

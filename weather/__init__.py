@@ -31,17 +31,21 @@ from .exceptions import (
     WeatherError,
 )
 from .favourites import Favourites
+from .html_dashboard import ChartSize, HtmlDashboard, TemperatureChart
 from .http import HttpClient, UrllibHttpClient
 from .models import CurrentWeather, DailyForecast, Forecast, Location
 from .providers import OpenMeteoProvider, WeatherProvider, parse_forecast
 from .serialise import forecast_from_dict, forecast_to_dict
 from .units import Imperial, Metric, UnitSystem, compass, unit_system
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "DashboardRenderer",
     "TextDashboard",
+    "HtmlDashboard",
+    "TemperatureChart",
+    "ChartSize",
     "Alert",
     "AlertChecker",
     "AlertRule",
