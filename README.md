@@ -9,9 +9,9 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 5 of 7. Weather models, weather codes, units, live forecasts from
-Open-Meteo, caching, favourite places, the text dashboard, weather alerts
-and an HTML dashboard with a temperature chart.
+Day 6 of 7. Weather models, weather codes, units, live forecasts from
+Open-Meteo, caching, favourite places, the text dashboard, weather alerts,
+an HTML dashboard with a temperature chart and a command line interface.
 
 ## Getting started
 
@@ -21,9 +21,42 @@ python -m venv .venv
 pip install -r requirements.txt  # only needed for the tests
 
 pytest                           # run the tests
+python -m weather demo           # try it with made up weather, no internet needed
 ```
 
 Needs Python 3.10 or newer.
+
+## Using it
+
+```bash
+python -m weather save Bromley            # the first place saved becomes home
+python -m weather forecast                # the full dashboard for home
+python -m weather forecast New York       # or any other place
+python -m weather now Paris               # one line, right now
+python -m weather html --days 5           # save it as a web page in data/
+python -m weather --units imperial now    # °F, mph and inches
+```
+
+| Command | What it does |
+| --- | --- |
+| `forecast [place] [--days N]` | The full dashboard, 1 to 16 days |
+| `now [place]` | The weather right now in one line |
+| `html [place] [--days N] [--out file]` | Save the dashboard as a web page |
+| `search <name>` | List every place that matches |
+| `places` | List your saved places, home first |
+| `save <name>` / `remove <name>` | Save or forget a place |
+| `home <name>` | Pick which saved place is home |
+| `clear-cache` | Forget saved forecasts so the next one is fresh |
+| `demo` | The dashboard with made up weather, no internet needed |
+
+Leave out the place and your home place is used. A saved place is found
+without going online, and anything else is searched for. Place names with
+spaces work with or without quotes.
+
+Each command is its own small class with a `name`, a `help` line and a
+`run` method. A new command is a new class added to the list, and nothing
+else has to change. Errors like an unknown place or no internet are shown as
+one clear line, never a long Python error.
 
 ## The weather data
 
@@ -239,7 +272,7 @@ dashboard just asks whichever one it's given, and never checks which.
 ## Tests
 
 ```bash
-pytest          # 215 tests
+pytest          # 248 tests
 ```
 
 ## Week plan
