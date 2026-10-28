@@ -9,9 +9,9 @@ and security. This week is about working with a real web API.
 
 ## Status
 
-Day 6 of 7. Weather models, weather codes, units, live forecasts from
-Open-Meteo, caching, favourite places, the text dashboard, weather alerts,
-an HTML dashboard with a temperature chart and a command line interface.
+Finished. Live forecasts from Open-Meteo, caching that works offline,
+favourite places, weather alerts, a text dashboard, an HTML dashboard with a
+temperature chart and a command line interface. 255 tests with 100% coverage.
 
 ## Getting started
 
@@ -269,11 +269,74 @@ units.rain(25.4)         # '1.00 in'
 `Metric` and `Imperial` are two versions of the abstract `UnitSystem`. The
 dashboard just asks whichever one it's given, and never checks which.
 
+## Project layout
+
+```
+weather/
+    models.py           Location, CurrentWeather, DailyForecast, Forecast
+    codes.py            weather code numbers into words
+    units.py            metric and imperial
+    http.py             talking to the internet, with retries
+    providers.py        WeatherProvider and OpenMeteoProvider
+    cache.py            MemoryCache and FileCache
+    cached_provider.py  CachedProvider (the Decorator pattern)
+    serialise.py        objects to JSON and back
+    favourites.py       saved places
+    alerts.py           alert rules and AlertChecker
+    dashboard.py        DashboardRenderer and TextDashboard
+    html_dashboard.py   HtmlDashboard and TemperatureChart
+    demo.py             a made up week for trying it offline
+    cli.py              the commands
+    files.py            safe file writing
+    exceptions.py       every error the package can raise
+tests/                  one test file per module, plus end to end tests
+```
+
+## How it's built
+
+Each part only knows about the part below it, through an abstract class:
+
+```
+cli.py  ->  WeatherProvider  ->  HttpClient  ->  the internet
+   |              ^
+   |        CachedProvider  ->  Cache
+   |
+   +--->  AlertChecker  ->  AlertRule (one class per kind of alert)
+   +--->  DashboardRenderer  ->  TextDashboard or HtmlDashboard
+```
+
+- **Abstract classes as plugs.** `WeatherProvider`, `HttpClient`, `Cache`,
+  `AlertRule`, `DashboardRenderer` and `UnitSystem` each say what a part
+  must do, not how. Any version that fits the plug can be swapped in, which
+  is how the tests swap in a fake internet.
+- **Small classes, one job each.** Every alert rule and every command is its
+  own class, so adding one never means editing the others.
+- **Frozen data.** Weather objects can't change once made, and they check
+  their own values, so bad data is caught where it starts.
+- **Errors you can read.** Every error is a `WeatherError`. The command line
+  catches them and prints one clear line.
+
 ## Tests
 
 ```bash
-pytest          # 248 tests
+pytest                      # 255 tests
+pytest --cov                # with a coverage report, fails below 95%
 ```
+
+None of the tests go online. They use saved answers from Open-Meteo and a
+clock the tests control, so they give the same result every time, even
+with no internet. `test_end_to_end.py` runs the whole program together,
+including going offline part way through.
+
+## What I learned this week
+
+- Reading a real web API, and handling it being slow, down or odd
+- Retrying politely, with a wait that grows each time
+- Caching, and falling back to an old answer when offline
+- The Decorator pattern, used for `CachedProvider`
+- Drawing a chart as SVG with no library
+- Escaping text so it can't break a web page
+- Testing code that uses the internet and the clock without using either
 
 ## Week plan
 
